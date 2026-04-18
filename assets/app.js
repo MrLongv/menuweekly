@@ -184,14 +184,16 @@ function switchTab(tab) {
 }
 
 function renderMenuGrid() {
-  const optionsMan = getDishOptions('man');
-  const optionsXao = getDishOptions('xao');
-  const optionsCanh = getDishOptions('canh');
-
-  els.menuGrid.innerHTML = state.weeklyMenu.days.map((day, index) => `
+  els.menuGrid.innerHTML = state.weeklyMenu.days.map((day, index) => {
+    const group = getDayGroupByIndex(index);
+    const optionsMan = getDishOptions(`man_${group}`);
+    const optionsXao = getDishOptions(`xao_${group}`);
+    const optionsCanh = getDishOptions(`canh_${group}`);
+    return `
     <article class="menu-day">
       <h4>
         <span>${day.label}</span>
+        <span class="day-group-badge">Nhóm ${group === '246' ? '2,4,6' : '3,5,7'}</span>
         <button class="small-btn" data-random-day="${index}">🎲 Ngày này</button>
       </h4>
       <div class="day-meta">
@@ -210,20 +212,21 @@ function renderMenuGrid() {
       </div>
       <div class="day-selects">
         <label class="field">
-          <span>Món mặn</span>
+          <span>Món mặn ${group === '246' ? '2,4,6' : '3,5,7'}</span>
           <select data-field="dishManId" data-index="${index}">${renderOptionMarkup(optionsMan, day.dishManId)}</select>
         </label>
         <label class="field">
-          <span>Món xào</span>
+          <span>Món xào ${group === '246' ? '2,4,6' : '3,5,7'}</span>
           <select data-field="dishXaoId" data-index="${index}">${renderOptionMarkup(optionsXao, day.dishXaoId)}</select>
         </label>
         <label class="field">
-          <span>Món canh</span>
+          <span>Món canh ${group === '246' ? '2,4,6' : '3,5,7'}</span>
           <select data-field="dishCanhId" data-index="${index}">${renderOptionMarkup(optionsCanh, day.dishCanhId)}</select>
         </label>
       </div>
     </article>
-  `).join('');
+  `;
+  }).join('');
 
   els.menuGrid.querySelectorAll('[data-field]').forEach((node) => {
     node.addEventListener('change', handleMenuFieldChange);
@@ -276,9 +279,10 @@ function randomizeWeek() {
 
 function randomizeDay(index, rerender = true) {
   const day = state.weeklyMenu.days[index];
-  day.dishManId = pickRandomId(getDishOptions('man'));
-  day.dishXaoId = pickRandomId(getDishOptions('xao'));
-  day.dishCanhId = pickRandomId(getDishOptions('canh'));
+  const group = getDayGroupByIndex(index);
+  day.dishManId = pickRandomId(getDishOptions(`man_${group}`));
+  day.dishXaoId = pickRandomId(getDishOptions(`xao_${group}`));
+  day.dishCanhId = pickRandomId(getDishOptions(`canh_${group}`));
   if (rerender) {
     renderMenuGrid();
     renderDashboard();
@@ -637,8 +641,19 @@ function formatCurrency(value) {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(Number(value || 0));
 }
 
+function getDayGroupByIndex(index) {
+  return [0, 2, 4].includes(Number(index)) ? '246' : '357';
+}
+
 function categoryLabel(value) {
-  return ({ man: 'Món mặn', xao: 'Món xào', canh: 'Món canh' }[value]) || value || '';
+  return ({
+    man_246: 'Món mặn 2,4,6',
+    man_357: 'Món mặn 3,5,7',
+    xao_246: 'Món xào 2,4,6',
+    xao_357: 'Món xào 3,5,7',
+    canh_246: 'Món canh 2,4,6',
+    canh_357: 'Món canh 3,5,7'
+  }[value]) || value || '';
 }
 
 function costGroupLabel(value) {
