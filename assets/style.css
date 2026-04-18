@@ -97,3 +97,18 @@ tbody tr:hover { background: #f8fbff; }
   .topbar { flex-direction: column; }
   .day-selects, .day-meta { grid-template-columns: 1fr; }
 }
+
+
+.day-group-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  margin-left:8px;
+  padding:4px 10px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:700;
+  color:#dbeafe;
+  background:rgba(59,130,246,.18);
+  border:1px solid rgba(96,165,250,.28);
+}
