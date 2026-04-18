@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Thực đơn tuần Pro</title>
+  <link rel="stylesheet" href="./assets/style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-badge">🍱</div>
+        <div>
+          <h1>Thực đơn tuần Pro</h1>
+          <p>GitHub Pages + Worker + D1</p>
+        </div>
+      </div>
+
+      <nav class="nav" id="mainNav">
+        <button class="nav-link active" data-tab="dashboard">Tổng quan</button>
+        <button class="nav-link" data-tab="menu">Thực đơn tuần</button>
+        <button class="nav-link" data-tab="dishes">Thư viện món</button>
+        <button class="nav-link" data-tab="recipes">Công thức món</button>
+        <button class="nav-link" data-tab="ingredients">Nguyên liệu & giá</button>
+        <button class="nav-link" data-tab="reports">Cân đối tuần</button>
+        <button class="nav-link" data-tab="settings">Cài đặt</button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="status-card">
+          <span class="status-dot" id="apiDot"></span>
+          <div>
+            <strong>API trạng thái</strong>
+            <p id="apiStatusText">Đang kiểm tra...</p>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <h2 id="pageTitle">Tổng quan</h2>
+          <p id="pageSubtitle">Theo dõi thực đơn, công thức và cân đối chi phí theo tuần.</p>
+        </div>
+        <div class="topbar-actions">
+          <label class="field compact">
+            <span>Tuần bắt đầu</span>
+            <input type="date" id="weekStartInput" />
+          </label>
+          <button class="btn secondary" id="reloadBtn">Tải lại dữ liệu</button>
+          <button class="btn primary" id="saveWeekBtn">Lưu tuần</button>
+        </div>
+      </header>
+
+      <section class="tab-panel active" id="tab-dashboard">
+        <div class="grid grid-4">
+          <article class="card stat-card">
+            <span class="label">Món đang dùng</span>
+            <strong id="statDishCount">0</strong>
+            <small>Tổng món đang kích hoạt</small>
+          </article>
+          <article class="card stat-card">
+            <span class="label">Nguyên liệu</span>
+            <strong id="statIngredientCount">0</strong>
+            <small>Danh mục đang quản lý</small>
+          </article>
+          <article class="card stat-card">
+            <span class="label">Chi phí tuần</span>
+            <strong id="statWeekCost">0 đ</strong>
+            <small>Tổng chi phí ước tính</small>
+          </article>
+          <article class="card stat-card">
+            <span class="label">Thừa / thiếu</span>
+            <strong id="statWeekBalance">0 đ</strong>
+            <small>So với định mức tuần</small>
+          </article>
+        </div>
+
+        <div class="grid grid-2">
+          <article class="card">
+            <div class="card-head">
+              <h3>Nhắc việc triển khai</h3>
+            </div>
+            <ul class="checklist">
+              <li>Deploy thư mục <code>frontend</code> lên GitHub Pages</li>
+              <li>Tạo Cloudflare D1 và chạy file <code>schema.sql</code></li>
+              <li>Deploy file <code>worker.js</code> bằng Wrangler</li>
+              <li>Điền URL Worker vào <code>assets/config.js</code></li>
+            </ul>
+          </article>
+          <article class="card">
+            <div class="card-head">
+              <h3>Tổng hợp tuần đang chọn</h3>
+            </div>
+            <div id="weekSummary" class="summary-list"></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="tab-menu">
+        <div class="card">
+          <div class="card-head spread">
+            <div>
+              <h3>Thực đơn tuần</h3>
+              <p>Chọn món cho từng ngày và số suất ăn để hệ thống tự tính cân đối.</p>
+            </div>
+            <div class="inline-actions">
+              <button class="btn secondary" id="randomWeekBtn">🎲 Tạo ngẫu nhiên</button>
+              <button class="btn ghost" id="duplicateLastWeekBtn">Dùng tuần gần nhất</button>
+            </div>
+          </div>
+
+          <div class="menu-grid" id="menuGrid"></div>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="tab-dishes">
+        <div class="grid grid-3">
+          <article class="card col-span-2">
+            <div class="card-head spread">
+              <div>
+                <h3>Danh sách món</h3>
+                <p>Quản lý món mặn, xào, canh.</p>
+              </div>
+              <div class="inline-actions">
+                <input class="search" id="dishSearchInput" placeholder="Tìm món..." />
+                <select id="dishFilterCategory">
+                  <option value="all">Tất cả nhóm</option>
+                  <option value="man">Món mặn</option>
+                  <option value="xao">Món xào</option>
+                  <option value="canh">Món canh</option>
+                </select>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Tên món</th>
+                    <th>Nhóm</th>
+                    <th>Trạng thái</th>
+                    <th>Ghi chú</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="dishTableBody"></tbody>
+              </table>
+            </div>
+          </article>
+
+          <article class="card">
+            <div class="card-head">
+              <h3 id="dishFormTitle">Thêm món</h3>
+            </div>
+            <form id="dishForm" class="form-stack">
+              <input type="hidden" id="dishId" />
+              <label class="field">
+                <span>Tên món</span>
+                <input type="text" id="dishName" required />
+              </label>
+              <label class="field">
+                <span>Nhóm món</span>
+                <select id="dishCategory" required>
+                  <option value="man">Món mặn</option>
+                  <option value="xao">Món xào</option>
+                  <option value="canh">Món canh</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>Ghi chú</span>
+                <textarea id="dishNotes" rows="3"></textarea>
+              </label>
+              <label class="field checkbox-field">
+                <input type="checkbox" id="dishActive" checked />
+                <span>Đang sử dụng</span>
+              </label>
+              <div class="form-actions">
+                <button type="submit" class="btn primary">Lưu món</button>
+                <button type="button" class="btn ghost" id="resetDishFormBtn">Làm mới</button>
+              </div>
+            </form>
+          </article>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="tab-recipes">
+        <div class="grid grid-3">
+          <article class="card">
+            <div class="card-head">
+              <h3>Chọn món</h3>
+            </div>
+            <div class="form-stack">
+              <label class="field">
+                <span>Món cần chỉnh công thức</span>
+                <select id="recipeDishSelect"></select>
+              </label>
+              <div class="hint">Định mức mặc định đang dùng theo <strong>100 suất</strong>.</div>
+            </div>
+          </article>
+          <article class="card col-span-2">
+            <div class="card-head spread">
+              <div>
+                <h3>Công thức nguyên liệu</h3>
+                <p>Thêm các dòng định mức cho món đang chọn.</p>
+              </div>
+              <button class="btn secondary" id="addRecipeRowBtn">+ Thêm dòng</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Nguyên liệu</th>
+                    <th>Đơn vị</th>
+                    <th>Định mức / 100 suất</th>
+                    <th>Nhóm chi phí</th>
+                    <th>Ghi chú</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="recipeTableBody"></tbody>
+              </table>
+            </div>
+            <div class="form-actions top-gap">
+              <button class="btn primary" id="saveRecipesBtn">Lưu công thức</button>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="tab-ingredients">
+        <div class="grid grid-3">
+          <article class="card col-span-2">
+            <div class="card-head spread">
+              <div>
+                <h3>Nguyên liệu & đơn giá</h3>
+                <p>Dùng cho cả tiền chợ và gia vị xuất kho.</p>
+              </div>
+              <input class="search" id="ingredientSearchInput" placeholder="Tìm nguyên liệu..." />
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Tên</th>
+                    <th>Đơn vị</th>
+                    <th>Đơn giá</th>
+                    <th>Nhóm</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="ingredientTableBody"></tbody>
+              </table>
+            </div>
+          </article>
+          <article class="card">
+            <div class="card-head">
+              <h3 id="ingredientFormTitle">Thêm nguyên liệu</h3>
+            </div>
+            <form id="ingredientForm" class="form-stack">
+              <input type="hidden" id="ingredientId" />
+              <label class="field">
+                <span>Tên nguyên liệu</span>
+                <input type="text" id="ingredientName" required />
+              </label>
+              <label class="field">
+                <span>Đơn vị</span>
+                <input type="text" id="ingredientUnit" placeholder="kg / bó / chai / gói" required />
+              </label>
+              <label class="field">
+                <span>Đơn giá</span>
+                <input type="number" id="ingredientPrice" min="0" step="1" required />
+              </label>
+              <label class="field">
+                <span>Nhóm</span>
+                <select id="ingredientCostGroup">
+                  <option value="market">Tiền chợ</option>
+                  <option value="warehouse">Gia vị xuất kho</option>
+                  <option value="fixed">Chi phí cố định</option>
+                </select>
+              </label>
+              <div class="form-actions">
+                <button type="submit" class="btn primary">Lưu nguyên liệu</button>
+                <button type="button" class="btn ghost" id="resetIngredientFormBtn">Làm mới</button>
+              </div>
+            </form>
+          </article>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="tab-reports">
+        <div class="grid grid-2">
+          <article class="card">
+            <div class="card-head">
+              <h3>Cân đối từng ngày</h3>
+              <p>Tự động cộng chi phí từ thực đơn và công thức.</p>
+            </div>
+            <div id="dailyReportCards" class="report-cards"></div>
+          </article>
+          <article class="card">
+            <div class="card-head">
+              <h3>Tổng hợp tuần</h3>
+            </div>
+            <div id="weeklyReportPanel"></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="tab-settings">
+        <div class="grid grid-2">
+          <article class="card">
+            <div class="card-head">
+              <h3>Cài đặt hệ thống</h3>
+            </div>
+            <form id="settingsForm" class="form-stack">
+              <label class="field">
+                <span>Định mức suất ăn mặc định (đ)</span>
+                <input type="number" id="settingMealPrice" min="0" step="100" />
+              </label>
+              <label class="field">
+                <span>Số suất mặc định mỗi ngày</span>
+                <input type="number" id="settingDefaultMeals" min="0" step="1" />
+              </label>
+              <label class="field">
+                <span>API Base URL</span>
+                <input type="text" id="settingApiBase" readonly />
+              </label>
+              <div class="form-actions">
+                <button type="submit" class="btn primary">Lưu cài đặt</button>
+              </div>
+            </form>
+          </article>
+          <article class="card">
+            <div class="card-head">
+              <h3>Ghi chú kiến trúc</h3>
+            </div>
+            <div class="note-box">
+              <p>Frontend này chỉ gọi API; dữ liệu không lưu localStorage làm nguồn chính nữa.</p>
+              <p>Các thao tác thêm/sửa/xóa món, nguyên liệu, công thức, thực đơn tuần đều gửi về Cloudflare Worker để ghi vào D1.</p>
+              <p>Anh có thể mở rộng thêm đăng nhập sau khi frontend và API đã chạy ổn.</p>
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="toast"></div>
+
+  <script src="./assets/config.js"></script>
+  <script src="./assets/app.js"></script>
+</body>
+</html>
