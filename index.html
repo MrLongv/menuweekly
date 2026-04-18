@@ -12,7 +12,7 @@
       <div class="brand">
         <div class="brand-badge">🍱</div>
         <div>
-          <h1>Thực đơn tuần Pro</h1>
+          <h1>Thực đơn tuần</h1>
           <p>GitHub Pages + Worker + D1</p>
         </div>
       </div>
@@ -104,7 +104,7 @@
           <div class="card-head spread">
             <div>
               <h3>Thực đơn tuần</h3>
-              <p>Chọn món cho từng ngày và số suất ăn để hệ thống tự tính cân đối.</p>
+              <p>Thứ 2,4,6 chỉ lấy món nhóm 2,4,6. Thứ 3,5,7 chỉ lấy món nhóm 3,5,7.</p>
             </div>
             <div class="inline-actions">
               <button class="btn secondary" id="randomWeekBtn">🎲 Tạo ngẫu nhiên</button>
@@ -122,15 +122,18 @@
             <div class="card-head spread">
               <div>
                 <h3>Danh sách món</h3>
-                <p>Quản lý món mặn, xào, canh.</p>
+                <p>Quản lý riêng món mặn, xào, canh theo nhóm 2,4,6 và 3,5,7.</p>
               </div>
               <div class="inline-actions">
                 <input class="search" id="dishSearchInput" placeholder="Tìm món..." />
                 <select id="dishFilterCategory">
                   <option value="all">Tất cả nhóm</option>
-                  <option value="man">Món mặn</option>
-                  <option value="xao">Món xào</option>
-                  <option value="canh">Món canh</option>
+                  <option value="man_246">Món mặn 2,4,6</option>
+                  <option value="man_357">Món mặn 3,5,7</option>
+                  <option value="xao_246">Món xào 2,4,6</option>
+                  <option value="xao_357">Món xào 3,5,7</option>
+                  <option value="canh_246">Món canh 2,4,6</option>
+                  <option value="canh_357">Món canh 3,5,7</option>
                 </select>
               </div>
             </div>
@@ -163,9 +166,12 @@
               <label class="field">
                 <span>Nhóm món</span>
                 <select id="dishCategory" required>
-                  <option value="man">Món mặn</option>
-                  <option value="xao">Món xào</option>
-                  <option value="canh">Món canh</option>
+                  <option value="man_246">Món mặn 2,4,6</option>
+                  <option value="man_357">Món mặn 3,5,7</option>
+                  <option value="xao_246">Món xào 2,4,6</option>
+                  <option value="xao_357">Món xào 3,5,7</option>
+                  <option value="canh_246">Món canh 2,4,6</option>
+                  <option value="canh_357">Món canh 3,5,7</option>
                 </select>
               </label>
               <label class="field">
